@@ -28,10 +28,10 @@ bld/
 *.pfx
 *.publishsettings
 
-## Rider files
+## JetBrains Rider
 .idea/
+**/.idea/
 *.sln.iml
-.idea/
 .idea.*
 
 ## ReSharper

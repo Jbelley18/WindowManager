@@ -1,16 +1,8 @@
 ﻿using System;
-using System.Text;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Windows.Forms;
+using System.Windows.Forms; // For NotifyIcon
 using System.Runtime.InteropServices; // For P/Invoke
+using System.Drawing; // For System.Drawing.Icon
 
 namespace WindowManager
 {
@@ -99,7 +91,7 @@ namespace WindowManager
             // Clean up and exit
             _notifyIcon.Visible = false;
             _notifyIcon.Dispose();
-            Application.Current.Shutdown();
+            System.Windows.Application.Current.Shutdown();
         }
         
         private void ShowSettings()
