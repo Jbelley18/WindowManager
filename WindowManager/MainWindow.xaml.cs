@@ -1,15 +1,25 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Forms; // For NotifyIcon
 using System.Runtime.InteropServices; // For P/Invoke
 using System.Drawing; // For System.Drawing.Icon
+using System.Windows.Interop;
 
 namespace WindowManager
 {
     public partial class MainWindow : Window
     {
+        
         private System.Windows.Forms.NotifyIcon _notifyIcon;
         
+        
+        // P/Invoke declarations for hotkey registration
+        [DllImport("user32.dll")]
+        private static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, int vk);
+        
+        [DllImport("user32.dll")]
+        private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
         // P/Invoke declarations for Windows API
         [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();
@@ -27,6 +37,14 @@ namespace WindowManager
         private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
 
         // Constants
+        
+        // Constants for hotkey
+        private const int WM_HOTKEY = 0x0312;
+        private const int MOD_ALT = 0x0001;
+        private const int MOD_CONTROL = 0x0002;
+        private const int MOD_SHIFT = 0x0004;
+        private const int MOD_WIN = 0x0008;
+        
         private const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
 
         // Structures
@@ -47,19 +65,33 @@ namespace WindowManager
             public RECT rcWork;
             public uint dwFlags;
         }
-
-        public MainWindow()
-        {
-            InitializeComponent();
-            
-            // Create and configure the tray icon
-            CreateTrayIcon();
-            
-            // Hide the main window but keep the application running
-            this.ShowInTaskbar = false;
-            this.Visibility = Visibility.Hidden;
-        }
         
+public MainWindow()
+{
+    InitializeComponent();
+    
+    // Create and configure the tray icon
+    CreateTrayIcon();
+    
+    // Register global hotkey (Alt+C for "Center")
+    // 'C' key has virtual key code 67
+    if (!RegisterHotKey(new WindowInteropHelper(this).Handle, 1, MOD_ALT, 67))
+    {
+        Console.WriteLine("Failed to register hotkey");
+        Debug.WriteLine("Failed to register hotkey");
+    }
+    else
+    {
+        Console.WriteLine("Hotkey registered successfully");
+        Debug.WriteLine("Hotkey registered successfully");
+    }
+    
+    // Hide the main window but keep the application running
+    this.ShowInTaskbar = false;
+    this.Visibility = Visibility.Hidden;
+}
+
+
         private void CreateTrayIcon()
         {
             _notifyIcon = new System.Windows.Forms.NotifyIcon
@@ -104,6 +136,8 @@ namespace WindowManager
         
         private void CenterActiveWindow()
         {
+            Console.WriteLine("CenterActiveWindow: Function has been called.");
+            
             // Get handle to foreground window
             IntPtr hWnd = GetForegroundWindow();
             if (hWnd == IntPtr.Zero)
