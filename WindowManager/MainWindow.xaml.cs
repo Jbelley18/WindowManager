@@ -66,30 +66,30 @@ namespace WindowManager
             public uint dwFlags;
         }
         
-public MainWindow()
-{
-    InitializeComponent();
-    
-    // Create and configure the tray icon
-    CreateTrayIcon();
-    
-    // Register global hotkey (Alt+C for "Center")
-    // 'C' key has virtual key code 67
-    if (!RegisterHotKey(new WindowInteropHelper(this).Handle, 1, MOD_ALT, 67))
-    {
-        Console.WriteLine("Failed to register hotkey");
-        Debug.WriteLine("Failed to register hotkey");
-    }
-    else
-    {
-        Console.WriteLine("Hotkey registered successfully");
-        Debug.WriteLine("Hotkey registered successfully");
-    }
-    
-    // Hide the main window but keep the application running
-    this.ShowInTaskbar = false;
-    this.Visibility = Visibility.Hidden;
-}
+        public MainWindow()
+        {
+            InitializeComponent();
+            
+            // Create and configure the tray icon
+            CreateTrayIcon();
+            
+            // Register global hotkey (Alt+C for "Center")
+            // 'C' key has virtual key code 67
+            if (!RegisterHotKey(new WindowInteropHelper(this).Handle, 1, MOD_ALT, 67))
+            {
+                Console.WriteLine("Failed to register hotkey");
+                Debug.WriteLine("Failed to register hotkey");
+            }
+            else
+            {
+                Console.WriteLine("Hotkey registered successfully");
+                Debug.WriteLine("Hotkey registered successfully");
+            }
+            
+            // Hide the main window but keep the application running
+            this.ShowInTaskbar = false;
+            this.Visibility = Visibility.Hidden;
+        }
 
 
         private void CreateTrayIcon()
@@ -167,9 +167,41 @@ public MainWindow()
             // Move window to center
             MoveWindow(hWnd, centerX, centerY, windowWidth, windowHeight, true);
         }
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+    
+            // Get the window handle
+            IntPtr handle = new WindowInteropHelper(this).Handle;
+    
+            // Add a hook to the window procedure
+            HwndSource source = HwndSource.FromHwnd(handle);
+            source.AddHook(WndProc);
+        }
+
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            // Check if the message is our hotkey
+            if (msg == WM_HOTKEY && wParam.ToInt32() == 1)
+            {
+                Console.WriteLine("Hotkey detected");
+                Debug.WriteLine("Hotkey detected");
         
+                // Call the center window function
+                CenterActiveWindow();
+        
+                handled = true;
+            }
+    
+            return IntPtr.Zero;
+        }
         protected override void OnClosed(EventArgs e)
         {
+            // Unregister hotkey
+            UnregisterHotKey(new WindowInteropHelper(this).Handle, 1);
+            Console.WriteLine("Hotkey unregistered");
+            Debug.WriteLine("Hotkey unregistered");
+    
             // Clean up the tray icon when window is closed
             _notifyIcon.Visible = false;
             _notifyIcon.Dispose();
