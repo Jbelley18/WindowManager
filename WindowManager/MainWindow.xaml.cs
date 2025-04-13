@@ -8,6 +8,7 @@ using System.Windows.Interop;
 using System.Collections.Generic;
 using System.Text;
 using System.ComponentModel;
+using MessageBox = System.Windows.Forms.MessageBox;
 
 namespace WindowManager
 {
@@ -86,6 +87,32 @@ namespace WindowManager
             public RECT rcMonitor;
             public RECT rcWork;
             public uint dwFlags;
+        }
+        
+        //TESTING
+        
+// Add this method to your MainWindow class
+        private void TestKeyboardHooks()
+        {
+            // Check if keyboard hook is initialized
+            if (_keyboardHook == null)
+            {
+                MessageBox.Show("Keyboard hook is not initialized. Initializing now...");
+        
+                // Initialize keyboard hook if it's null
+                _keyboardHook = new KeyboardHook();
+                _keyboardHook.KeyDown += KeyboardHook_KeyDown;
+                _keyboardHook.Install();
+            }
+            else
+            {
+                MessageBox.Show("Keyboard hook is already initialized. Status: " + 
+                                (_keyboardHook.ToString()));
+            }
+    
+            // Let's add a basic log method to KeyboardHook class
+            MessageBox.Show("Try pressing Ctrl+Alt+C, Ctrl+Shift+F11, or Alt+F10 now.\n" +
+                            "Check the debug console for key events.");
         }
         
         public MainWindow()
@@ -396,6 +423,9 @@ namespace WindowManager
             // Add exit item
             _notifyIcon.ContextMenuStrip.Items.Add("-"); // Separator
             _notifyIcon.ContextMenuStrip.Items.Add("Exit", null, OnExit);
+            
+            //TESTING
+            _notifyIcon.ContextMenuStrip.Items.Add("Test Keyboard Hooks", null, (s, e) => TestKeyboardHooks());
         }
         
         private void OnRefreshWindowList(object sender, EventArgs e)
@@ -403,20 +433,26 @@ namespace WindowManager
             UpdateContextMenuWithWindows();
         }
         
+// In MainWindow.xaml.cs
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);
-    
+
             // Get the window handle
             IntPtr handle = new WindowInteropHelper(this).Handle;
-    
-            // Initialize keyboard hook
+            Console.WriteLine($"Window handle: {handle}");
+            Debug.WriteLine($"Window handle: {handle}");
+
+            // Initialize keyboard hook with additional logging
             _keyboardHook = new KeyboardHook();
             _keyboardHook.KeyDown += KeyboardHook_KeyDown;
             _keyboardHook.Install();
-            
-            Console.WriteLine("Keyboard hook installed");
-            Debug.WriteLine("Keyboard hook installed");
+    
+            Console.WriteLine($"Keyboard hook initialized. Class: {_keyboardHook}");
+            Debug.WriteLine($"Keyboard hook initialized. Class: {_keyboardHook}");
+    
+            // Add a MessageBox to confirm hook was installed
+            MessageBox.Show("Keyboard hook installed. Try pressing hotkeys now.");
         }
 
         // Handle keyboard hook events
