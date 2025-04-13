@@ -14,6 +14,7 @@ namespace WindowManager
     public partial class MainWindow : Window
     {
         private System.Windows.Forms.NotifyIcon _notifyIcon;
+        private KeyboardHook _keyboardHook;
         
         // Define a delegate for the EnumWindows callback
         private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
@@ -44,13 +45,6 @@ namespace WindowManager
         [DllImport("user32.dll", SetLastError = true)]
         private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
         
-        // P/Invoke declarations for hotkey registration
-        [DllImport("user32.dll")]
-        private static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, int vk);
-        
-        [DllImport("user32.dll")]
-        private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
-        
         // P/Invoke declarations for Windows API
         [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();
@@ -67,13 +61,6 @@ namespace WindowManager
         [DllImport("user32.dll")]
         private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
 
-        // Constants for hotkey
-        private const int WM_HOTKEY = 0x0312;
-        private const int MOD_ALT = 0x0001;
-        private const int MOD_CONTROL = 0x0002;
-        private const int MOD_SHIFT = 0x0004;
-        private const int MOD_WIN = 0x0008;
-        
         // Constants for monitor
         private const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
         
@@ -293,27 +280,6 @@ namespace WindowManager
             Debug.WriteLine($"MoveWindow result: {moveResult}");
         }
         
-        private bool RegisterHotkeyWithErrorCheck(IntPtr hwnd, int id, int modifiers, int key)
-        {
-            Console.WriteLine($"Attempting to register hotkey - ID: {id}, Modifiers: {modifiers}, Key: {key}");
-            Debug.WriteLine($"Attempting to register hotkey - ID: {id}, Modifiers: {modifiers}, Key: {key}");
-            
-            if (!RegisterHotKey(hwnd, id, modifiers, key))
-            {
-                int errorCode = Marshal.GetLastWin32Error();
-                string errorMessage = new Win32Exception(errorCode).Message;
-                
-                Console.WriteLine($"Failed to register hotkey. Error code: {errorCode}, Message: {errorMessage}");
-                Debug.WriteLine($"Failed to register hotkey. Error code: {errorCode}, Message: {errorMessage}");
-                
-                return false;
-            }
-            
-            Console.WriteLine($"Successfully registered hotkey - ID: {id}, Modifiers: {modifiers}, Key: {key}");
-            Debug.WriteLine($"Successfully registered hotkey - ID: {id}, Modifiers: {modifiers}, Key: {key}");
-            return true;
-        }
-        
         /// <summary>
         /// Get all visible windows with titles
         /// </summary>
@@ -444,86 +410,55 @@ namespace WindowManager
             // Get the window handle
             IntPtr handle = new WindowInteropHelper(this).Handle;
     
-            // Add a hook to the window procedure
-            HwndSource source = HwndSource.FromHwnd(handle);
-            source.AddHook(WndProc);
+            // Initialize keyboard hook
+            _keyboardHook = new KeyboardHook();
+            _keyboardHook.KeyDown += KeyboardHook_KeyDown;
+            _keyboardHook.Install();
             
-            // Register hotkeys now that the window is initialized
-            Console.WriteLine($"Window handle: {handle}");
-            Debug.WriteLine($"Window handle: {handle}");
-            
-            // Try Ctrl+Alt+C
-            bool ctrlAltCRegistered = RegisterHotkeyWithErrorCheck(handle, 1, MOD_CONTROL | MOD_ALT, (int)Keys.C);
-            
-            // If Ctrl+Alt+C fails, try Alt+C
-            if (!ctrlAltCRegistered)
-            {
-                bool altCRegistered = RegisterHotkeyWithErrorCheck(handle, 2, MOD_ALT, (int)Keys.C);
-                
-                // If Alt+C fails, try Shift+C
-                if (!altCRegistered)
-                {
-                    RegisterHotkeyWithErrorCheck(handle, 3, MOD_SHIFT, (int)Keys.C);
-                }
-            }
+            Console.WriteLine("Keyboard hook installed");
+            Debug.WriteLine("Keyboard hook installed");
         }
 
-        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        // Handle keyboard hook events
+        private void KeyboardHook_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
         {
-            // Log all window messages for debugging
-            Debug.WriteLine($"WndProc message: 0x{msg:X4}, wParam: {wParam.ToInt32()}, lParam: {lParam.ToInt64()}");
+            Console.WriteLine($"Keyboard hook triggered: {e.KeyData}");
+            Debug.WriteLine($"Keyboard hook triggered: {e.KeyData}");
             
-            // Check if the message is our hotkey
-            if (msg == WM_HOTKEY)
+            // Check for Ctrl+Alt+C
+            if (e.KeyData == (System.Windows.Forms.Keys.C | System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt))
             {
-                int hotkeyId = wParam.ToInt32();
-                Console.WriteLine($"HOTKEY DETECTED - ID: {hotkeyId}");
-                Debug.WriteLine($"HOTKEY DETECTED - ID: {hotkeyId}");
-                
-                switch (hotkeyId)
-                {
-                    case 1:
-                        Console.WriteLine("Ctrl+Alt+C hotkey pressed");
-                        Debug.WriteLine("Ctrl+Alt+C hotkey pressed");
-                        CenterActiveWindow();
-                        break;
-                        
-                    case 2:
-                        Console.WriteLine("Alt+C hotkey pressed");
-                        Debug.WriteLine("Alt+C hotkey pressed");
-                        CenterActiveWindow();
-                        break;
-                        
-                    case 3:
-                        Console.WriteLine("Shift+C hotkey pressed");
-                        Debug.WriteLine("Shift+C hotkey pressed");
-                        CenterActiveWindow();
-                        break;
-                        
-                    default:
-                        Console.WriteLine($"Unknown hotkey ID: {hotkeyId}");
-                        Debug.WriteLine($"Unknown hotkey ID: {hotkeyId}");
-                        break;
-                }
-                
-                handled = true;
+                Console.WriteLine("Ctrl+Alt+C detected, centering window");
+                Debug.WriteLine("Ctrl+Alt+C detected, centering window");
+                CenterActiveWindow();
             }
-            
-            return IntPtr.Zero;
+            // Check for Ctrl+Shift+F11
+            else if (e.KeyData == (System.Windows.Forms.Keys.F11 | System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift))
+            {
+                Console.WriteLine("Ctrl+Shift+F11 detected, centering window");
+                Debug.WriteLine("Ctrl+Shift+F11 detected, centering window");
+                CenterActiveWindow();
+            }
+            // Check for Alt+F10
+            else if (e.KeyData == (System.Windows.Forms.Keys.F10 | System.Windows.Forms.Keys.Alt))
+            {
+                Console.WriteLine("Alt+F10 detected, centering window");
+                Debug.WriteLine("Alt+F10 detected, centering window");
+                CenterActiveWindow();
+            }
         }
         
         protected override void OnClosed(EventArgs e)
         {
-            IntPtr handle = new WindowInteropHelper(this).Handle;
-            
-            // Unregister all hotkeys
-            UnregisterHotKey(handle, 1); // Ctrl+Alt+C
-            UnregisterHotKey(handle, 2); // Alt+C
-            UnregisterHotKey(handle, 3); // Shift+C
-            
-            Console.WriteLine("Hotkeys unregistered");
-            Debug.WriteLine("Hotkeys unregistered");
-    
+            // Clean up keyboard hook
+            if (_keyboardHook != null)
+            {
+                _keyboardHook.Dispose();
+                _keyboardHook = null;
+                Console.WriteLine("Keyboard hook disposed");
+                Debug.WriteLine("Keyboard hook disposed");
+            }
+
             // Clean up the tray icon when window is closed
             _notifyIcon.Visible = false;
             _notifyIcon.Dispose();
