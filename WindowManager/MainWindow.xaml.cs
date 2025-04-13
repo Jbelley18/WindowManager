@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.ComponentModel;
 using MessageBox = System.Windows.Forms.MessageBox;
+using System.Threading;
 
 namespace WindowManager
 {
@@ -24,6 +25,10 @@ namespace WindowManager
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+        
+        // explicit window activation before centering:
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
         
         // Get window text
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
@@ -90,8 +95,6 @@ namespace WindowManager
         }
         
         //TESTING
-        
-// Add this method to your MainWindow class
         private void TestKeyboardHooks()
         {
             // Check if keyboard hook is initialized
@@ -199,6 +202,15 @@ namespace WindowManager
             
             Console.WriteLine($"Window title: {title}");
             Debug.WriteLine($"Window title: {title}");
+            
+            // Skip if window has no title or is our application window
+            IntPtr ourWindowHandle = new WindowInteropHelper(this).Handle;
+            if (string.IsNullOrEmpty(title.ToString()) || hWnd == ourWindowHandle)
+            {
+                Console.WriteLine("Skipping window with no title or our own window");
+                Debug.WriteLine("Skipping window with no title or our own window");
+                return;
+            }
 
             // Get window dimensions
             RECT windowRect;
@@ -240,6 +252,9 @@ namespace WindowManager
             
             Console.WriteLine($"Calculated center position: {centerX},{centerY}");
             Debug.WriteLine($"Calculated center position: {centerX},{centerY}");
+            
+            Thread.Sleep(100); // Small delay to ensure window is ready
+
 
             // Move window to center
             bool moveResult = MoveWindow(hWnd, centerX, centerY, windowWidth, windowHeight, true);

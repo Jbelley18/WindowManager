@@ -58,8 +58,7 @@ namespace WindowManager
                 return SetWindowsHookEx(WH_KEYBOARD_LL, proc, GetModuleHandle(curModule.ModuleName), 0);
             }
         }
-
-// In KeyboardHook.cs
+// In KeyboardHook.cs class, update the HookCallback method
 private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
 {
     if (nCode >= 0)
@@ -67,23 +66,23 @@ private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         int vkCode = Marshal.ReadInt32(lParam);
         Keys key = (Keys)vkCode;
         
+        // Track modifier states directly
+        if (key == Keys.LControlKey || key == Keys.RControlKey)
+            _isCtrlPressed = (wParam == (IntPtr)WM_KEYDOWN || wParam == (IntPtr)WM_SYSKEYDOWN);
+        else if (key == Keys.LMenu || key == Keys.RMenu)
+            _isAltPressed = (wParam == (IntPtr)WM_KEYDOWN || wParam == (IntPtr)WM_SYSKEYDOWN);
+        else if (key == Keys.LShiftKey || key == Keys.RShiftKey)
+            _isShiftPressed = (wParam == (IntPtr)WM_KEYDOWN || wParam == (IntPtr)WM_SYSKEYDOWN);
+        
         // Log every key event
-        Console.WriteLine($"Key event: {key}, wParam: {wParam}");
-        Debug.WriteLine($"Key event: {key}, wParam: {wParam}");
+        Console.WriteLine($"Key event: {key}, wParam: {wParam}, Ctrl: {_isCtrlPressed}, Alt: {_isAltPressed}, Shift: {_isShiftPressed}");
+        Debug.WriteLine($"Key event: {key}, wParam: {wParam}, Ctrl: {_isCtrlPressed}, Alt: {_isAltPressed}, Shift: {_isShiftPressed}");
 
-        // Check if it's a key down or key up event
+        // Check if it's a key down event
         if (wParam == (IntPtr)WM_KEYDOWN || wParam == (IntPtr)WM_SYSKEYDOWN)
         {
-            // Check for key combinations
-            bool control = (Control.ModifierKeys & Keys.Control) != 0;
-            bool shift = (Control.ModifierKeys & Keys.Shift) != 0;
-            bool alt = (Control.ModifierKeys & Keys.Alt) != 0;
-            
-            Console.WriteLine($"Modifiers - Ctrl: {control}, Shift: {shift}, Alt: {alt}");
-            Debug.WriteLine($"Modifiers - Ctrl: {control}, Shift: {shift}, Alt: {alt}");
-
             // Handle Ctrl+Alt+C
-            if (control && alt && key == Keys.C)
+            if (_isCtrlPressed && _isAltPressed && key == Keys.C)
             {
                 Console.WriteLine("Keyboard hook detected Ctrl+Alt+C");
                 Debug.WriteLine("Keyboard hook detected Ctrl+Alt+C");
@@ -92,7 +91,7 @@ private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
             }
 
             // Handle Ctrl+Shift+F11
-            if (control && shift && key == Keys.F11)
+            if (_isCtrlPressed && _isShiftPressed && key == Keys.F11)
             {
                 Console.WriteLine("Keyboard hook detected Ctrl+Shift+F11");
                 Debug.WriteLine("Keyboard hook detected Ctrl+Shift+F11");
@@ -101,7 +100,7 @@ private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
             }
 
             // Handle Alt+F10
-            if (alt && !control && !shift && key == Keys.F10)
+            if (_isAltPressed && !_isCtrlPressed && !_isShiftPressed && key == Keys.F10)
             {
                 Console.WriteLine("Keyboard hook detected Alt+F10");
                 Debug.WriteLine("Keyboard hook detected Alt+F10");
@@ -111,13 +110,10 @@ private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         }
         else if (wParam == (IntPtr)WM_KEYUP || wParam == (IntPtr)WM_SYSKEYUP)
         {
-            // Similar code for key up events if needed
+            // Key up events
             OnKeyUp(new KeyEventArgs((Keys)vkCode));
         }
     }
-
-    return CallNextHookEx(_hookId, nCode, wParam, lParam);
-}
 
     return CallNextHookEx(_hookId, nCode, wParam, lParam);
 }
