@@ -109,13 +109,9 @@ namespace WindowManager
             }
             else
             {
-                MessageBox.Show("Keyboard hook is already initialized. Status: " + 
-                                (_keyboardHook.ToString()));
+                MessageBox.Show("Keyboard hook is already initialized and should be working.\n" +
+                                "Try pressing Ctrl+Alt+C, Ctrl+Shift+F11, or Alt+F10 to center a window.");
             }
-    
-            // Let's add a basic log method to KeyboardHook class
-            MessageBox.Show("Try pressing Ctrl+Alt+C, Ctrl+Shift+F11, or Alt+F10 now.\n" +
-                            "Check the debug console for key events.");
         }
         
         public MainWindow()
@@ -128,6 +124,16 @@ namespace WindowManager
             // Test window enumeration
             TestWindowEnumeration();
             
+            // Explicitly initialize keyboard hook here
+            if (_keyboardHook == null)
+            {
+                _keyboardHook = new KeyboardHook();
+                _keyboardHook.KeyDown += KeyboardHook_KeyDown;
+                _keyboardHook.Install();
+                Console.WriteLine("Keyboard hook initialized in constructor");
+                Debug.WriteLine("Keyboard hook initialized in constructor");
+            }
+
             // Hide the main window but keep the application running
             this.ShowInTaskbar = false;
             this.Visibility = Visibility.Hidden;
@@ -448,7 +454,6 @@ namespace WindowManager
             UpdateContextMenuWithWindows();
         }
         
-// In MainWindow.xaml.cs
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);
@@ -458,16 +463,21 @@ namespace WindowManager
             Console.WriteLine($"Window handle: {handle}");
             Debug.WriteLine($"Window handle: {handle}");
 
-            // Initialize keyboard hook with additional logging
-            _keyboardHook = new KeyboardHook();
-            _keyboardHook.KeyDown += KeyboardHook_KeyDown;
-            _keyboardHook.Install();
-    
-            Console.WriteLine($"Keyboard hook initialized. Class: {_keyboardHook}");
-            Debug.WriteLine($"Keyboard hook initialized. Class: {_keyboardHook}");
-    
-            // Add a MessageBox to confirm hook was installed
-            MessageBox.Show("Keyboard hook installed. Try pressing hotkeys now.");
+            // Initialize keyboard hook if not already initialized
+            if (_keyboardHook == null)
+            {
+                _keyboardHook = new KeyboardHook();
+                _keyboardHook.KeyDown += KeyboardHook_KeyDown;
+                _keyboardHook.Install();
+        
+                Console.WriteLine("Keyboard hook initialized in OnSourceInitialized");
+                Debug.WriteLine("Keyboard hook initialized in OnSourceInitialized");
+            }
+            else
+            {
+                Console.WriteLine("Keyboard hook already initialized");
+                Debug.WriteLine("Keyboard hook already initialized");
+            }
         }
 
         // Handle keyboard hook events
