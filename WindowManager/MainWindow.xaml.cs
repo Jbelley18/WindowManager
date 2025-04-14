@@ -444,9 +444,32 @@ namespace WindowManager
             // Add exit item
             _notifyIcon.ContextMenuStrip.Items.Add("-"); // Separator
             _notifyIcon.ContextMenuStrip.Items.Add("Exit", null, OnExit);
+            _notifyIcon.ContextMenuStrip.Items.Add("Settings", null, OnSettings);
+            _notifyIcon.ContextMenuStrip.Items.Add("-"); // Separator
             
             //TESTING
             _notifyIcon.ContextMenuStrip.Items.Add("Test Keyboard Hooks", null, (s, e) => TestKeyboardHooks());
+        }
+        
+        private void OnSettings(object sender, EventArgs e)
+        {
+            var settingsWindow = new SettingsWindow();
+            if (settingsWindow.ShowDialog() == true)
+            {
+                // Settings saved, reinitialize keyboard hook to apply new shortcuts
+                if (_keyboardHook != null)
+                {
+                    _keyboardHook.Dispose();
+                    _keyboardHook = null;
+                }
+        
+                _keyboardHook = new KeyboardHook();
+                _keyboardHook.KeyDown += KeyboardHook_KeyDown;
+                _keyboardHook.Install();
+        
+                Console.WriteLine("Keyboard hook reinitialized with new settings");
+                Debug.WriteLine("Keyboard hook reinitialized with new settings");
+            }
         }
         
         private void OnRefreshWindowList(object sender, EventArgs e)
@@ -485,26 +508,20 @@ namespace WindowManager
         {
             Console.WriteLine($"Keyboard hook triggered: {e.KeyData}");
             Debug.WriteLine($"Keyboard hook triggered: {e.KeyData}");
-            
-            // Check for Ctrl+Alt+C
-            if (e.KeyData == (System.Windows.Forms.Keys.C | System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt))
+    
+            // Add a short delay to ensure proper window focus
+            System.Threading.Thread.Sleep(100);
+    
+            // Load current settings
+            var settings = Settings.Load();
+    
+            // Check for any of the configured shortcuts
+            if (e.KeyData == settings.CenterWindowKey1 || 
+                e.KeyData == settings.CenterWindowKey2 || 
+                e.KeyData == settings.CenterWindowKey3)
             {
-                Console.WriteLine("Ctrl+Alt+C detected, centering window");
-                Debug.WriteLine("Ctrl+Alt+C detected, centering window");
-                CenterActiveWindow();
-            }
-            // Check for Ctrl+Shift+F11
-            else if (e.KeyData == (System.Windows.Forms.Keys.F11 | System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift))
-            {
-                Console.WriteLine("Ctrl+Shift+F11 detected, centering window");
-                Debug.WriteLine("Ctrl+Shift+F11 detected, centering window");
-                CenterActiveWindow();
-            }
-            // Check for Alt+F10
-            else if (e.KeyData == (System.Windows.Forms.Keys.F10 | System.Windows.Forms.Keys.Alt))
-            {
-                Console.WriteLine("Alt+F10 detected, centering window");
-                Debug.WriteLine("Alt+F10 detected, centering window");
+                Console.WriteLine($"Shortcut detected, centering window");
+                Debug.WriteLine($"Shortcut detected, centering window");
                 CenterActiveWindow();
             }
         }

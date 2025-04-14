@@ -1,0 +1,64 @@
+﻿<Window x:Class="WindowManager.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Window Manager Settings" Height="350" Width="500"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <TextBlock Grid.Row="0" Text="Keyboard Shortcuts" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
+        
+        <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,0,0,10">
+            <GroupBox Header="Window Centering Shortcuts" Padding="5">
+                <StackPanel>
+                    <Grid Margin="0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Shortcut 1:" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" x:Name="ShortcutText1" IsReadOnly="True" Margin="5,0" Padding="5,2"/>
+                        <Button Grid.Column="2" Content="Change" x:Name="ChangeShortcut1" Click="ChangeShortcut1_Click" Width="70"/>
+                    </Grid>
+                    
+                    <Grid Margin="0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Shortcut 2:" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" x:Name="ShortcutText2" IsReadOnly="True" Margin="5,0" Padding="5,2"/>
+                        <Button Grid.Column="2" Content="Change" x:Name="ChangeShortcut2" Click="ChangeShortcut2_Click" Width="70"/>
+                    </Grid>
+                    
+                    <Grid Margin="0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Shortcut 3:" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" x:Name="ShortcutText3" IsReadOnly="True" Margin="5,0" Padding="5,2"/>
+                        <Button Grid.Column="2" Content="Change" x:Name="ChangeShortcut3" Click="ChangeShortcut3_Click" Width="70"/>
+                    </Grid>
+                </StackPanel>
+            </GroupBox>
+            
+            <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" Foreground="Gray">
+                Note: Click on a "Change" button and then press the key combination you want to use.
+                Press Escape to cancel.
+            </TextBlock>
+        </StackPanel>
+        
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Save" Width="80" Height="30" Margin="0,0,10,0" Click="SaveButton_Click"/>
+            <Button Content="Cancel" Width="80" Height="30" Click="CancelButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
