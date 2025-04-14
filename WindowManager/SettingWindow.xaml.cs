@@ -6,7 +6,7 @@ using MessageBox = System.Windows.MessageBox;
 
 namespace WindowManager
 {
-    public partial class SettingsWindow : Window
+    public partial class SettingWindow : Window
     {
         private Settings _settings;
         private System.Windows.Forms.Keys _currentShortcut1;
@@ -17,7 +17,7 @@ namespace WindowManager
         private bool _isRecordingShortcut2 = false;
         private bool _isRecordingShortcut3 = false;
         
-        public SettingsWindow()
+        public SettingWindow()
         {
             InitializeComponent();
             
@@ -32,8 +32,15 @@ namespace WindowManager
             // Display current shortcuts
             UpdateShortcutDisplay();
             
+            // Connect event handlers (since they're not in the XAML)
+            ChangeShortcut1.Click += ChangeShortcut1_Click;
+            ChangeShortcut2.Click += ChangeShortcut2_Click;
+            ChangeShortcut3.Click += ChangeShortcut3_Click;
+            SaveButton.Click += SaveButton_Click;
+            CancelButton.Click += CancelButton_Click;
+            
             // Handle keyboard events
-            this.PreviewKeyDown += SettingsWindow_PreviewKeyDown;
+            this.PreviewKeyDown += SettingWindow_PreviewKeyDown;
         }
         
         private void UpdateShortcutDisplay()
@@ -131,7 +138,7 @@ namespace WindowManager
             ChangeShortcut3.Click += ChangeShortcut3_Click;
         }
         
-        private void SettingsWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        private void SettingWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             // If we're recording a shortcut
             if (_isRecordingShortcut1 || _isRecordingShortcut2 || _isRecordingShortcut3)

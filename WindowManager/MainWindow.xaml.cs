@@ -453,8 +453,8 @@ namespace WindowManager
         
         private void OnSettings(object sender, EventArgs e)
         {
-            var settingsWindow = new SettingsWindow();
-            if (settingsWindow.ShowDialog() == true)
+            var settingWindow = new SettingWindow(); // Make sure this matches your class name
+            if (settingWindow.ShowDialog() == true)
             {
                 // Settings saved, reinitialize keyboard hook to apply new shortcuts
                 if (_keyboardHook != null)
@@ -462,11 +462,11 @@ namespace WindowManager
                     _keyboardHook.Dispose();
                     _keyboardHook = null;
                 }
-        
+
                 _keyboardHook = new KeyboardHook();
                 _keyboardHook.KeyDown += KeyboardHook_KeyDown;
                 _keyboardHook.Install();
-        
+
                 Console.WriteLine("Keyboard hook reinitialized with new settings");
                 Debug.WriteLine("Keyboard hook reinitialized with new settings");
             }
